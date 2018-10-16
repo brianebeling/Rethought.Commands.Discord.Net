@@ -2,7 +2,7 @@
 
 namespace Rethought.Commands.Discord.Net.Conditions
 {
-    public class IsPrivateChannel : ICondition<DiscordContext>
+    public class PrivateChannelCondition : ICondition<DiscordContext>
     {
         public bool Satisfied(DiscordContext context)
         {

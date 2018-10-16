@@ -11,4 +11,10 @@
     <ProjectReference Include="..\Rethought.Commands.Discord.Net\Rethought.Commands.Discord.Net.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="Rethought.Commands">
+      <HintPath>..\..\Rethought.Commands\Rethought.Commands\bin\Debug\netcoreapp2.1\Rethought.Commands.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
-using Optional;
 using Rethought.Commands.Builder;
 using Rethought.Commands.Discord.Net.Prefix;
-using Rethought.Commands.Discord.Net.TypeParsers;
-using Rethought.Commands.Parser;
+using Rethought.Commands.Parser.Auto;
+using Rethought.Extensions.Optional;
 
 namespace Rethought.Commands.Discord.Net.Sample
 {
@@ -30,8 +28,8 @@ namespace Rethought.Commands.Discord.Net.Sample
                 return Task.CompletedTask;
             };
 
-            await discordSocketClient.LoginAsync(TokenType.Bot, "TOKEN");
-            await discordSocketClient.StartAsync();
+            await discordSocketClient.LoginAsync(TokenType.Bot, "TOKEN").ConfigureAwait(false);
+            await discordSocketClient.StartAsync().ConfigureAwait(false);
 
             var discordContextFactory = new DiscordContextFactory(discordSocketClient);
 
@@ -39,10 +37,7 @@ namespace Rethought.Commands.Discord.Net.Sample
 
             discordSocketClient.Ready += () =>
             {
-                var typeParserDictionary = new Dictionary<Type, ITypeParser<string, object>>()
-                {
-                    {typeof(uint), new ObjectTypeParserWrapper<string, uint>(Commands.Parser.Func<string, uint>.Create(s => Option.Some(uint.Parse(s))))}
-                };
+                var autoBuilderFactory = new AutoBuilderFactory(TypeParserDictionaryFactory.CreateDefault());
 
                 asyncFuncBuilder
                     .WithCondition(context => !context.User.IsBot)
@@ -52,14 +47,14 @@ namespace Rethought.Commands.Discord.Net.Sample
                         root =>
                             root.WithGroup(
                                 new StringPrefix("misc"),
-                                new List<Action<AsyncFuncBuilder<NormalizedDiscordContext>>>
+                                new List<Action<AsyncFuncBuilder<PrefixNormalizedDiscordContext>>>
                                 {
                                     echo => echo.WithPrefix(
                                         new StringPrefix("echo"),
                                         command => command.WithAdapter(
-                                            Commands.Parser.Auto.Builder.Create()
-                                                .WithTypeParser(parameter => Option.Some(uint.Parse(parameter)))
-                                                .Build<NormalizedDiscordContext, EchoContext>(input => input.NormalizedMessage),
+                                            autoBuilderFactory.Create()
+                                                .Build<PrefixNormalizedDiscordContext, EchoContext>(
+                                                    input => input.PrefixNormalizedMessage),
                                             CreateEchoConfiguration())),
 
                                     reverse => reverse.WithPrefix(
@@ -72,7 +67,8 @@ namespace Rethought.Commands.Discord.Net.Sample
                                     async context =>
                                     {
                                         await context.DiscordContext.Channel.SendMessageAsync(
-                                            "Sorry, I don't know that command!");
+                                                "Sorry, I don't know that command!")
+                                            .ConfigureAwait(false);
                                     })));
 
                 var asyncAction = asyncFuncBuilder.Build();
@@ -81,16 +77,17 @@ namespace Rethought.Commands.Discord.Net.Sample
                 {
                     if (message is IUserMessage userMessage)
                     {
-                        await asyncAction.InvokeAsync(
-                            discordContextFactory.Create(userMessage),
-                            CancellationToken.None);
+                        var result = await asyncAction.InvokeAsync(
+                                discordContextFactory.Create(userMessage),
+                                CancellationToken.None)
+                            .ConfigureAwait(false);
                     }
                 };
 
                 return Task.CompletedTask;
             };
 
-            await Task.Delay(-1);
+            await Task.Delay(-1).ConfigureAwait(false);
         }
 
         private static Action<AsyncFuncBuilder<ReverseContext>> CreateReverseConfiguration()
@@ -100,7 +97,8 @@ namespace Rethought.Commands.Discord.Net.Sample
                     async reverseContext =>
                     {
                         await reverseContext.DiscordContext.Channel.SendMessageAsync(
-                            new string(reverseContext.NormalizedMessage.Reverse().ToArray()));
+                                new string(reverseContext.NormalizedMessage.Reverse().ToArray()))
+                            .ConfigureAwait(false);
                     });
         }
 
@@ -111,8 +109,16 @@ namespace Rethought.Commands.Discord.Net.Sample
                 .WithAsyncFunc(
                     async echoContext =>
                     {
-                        await echoContext.DiscordContext.Channel.SendMessageAsync(
-                            echoContext.NormalizedMessage);
+                        if (echoContext.AmountOption.TryGetValue(out var amount))
+                        {
+                            await echoContext.PrefixNormalizedDiscordContext.DiscordContext.Channel.SendMessageAsync(
+                                    string.Concat(Enumerable.Repeat(echoContext.Content, amount)))
+                                .ConfigureAwait(false);
+                        }
+
+                        await echoContext.PrefixNormalizedDiscordContext.DiscordContext.Channel.SendMessageAsync(
+                                echoContext.Content)
+                            .ConfigureAwait(false);
                     });
         }
     }

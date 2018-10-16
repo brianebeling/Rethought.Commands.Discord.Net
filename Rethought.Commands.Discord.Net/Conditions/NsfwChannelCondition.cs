@@ -3,7 +3,7 @@ using Rethought.Commands.Conditions;
 
 namespace Rethought.Commands.Discord.Net.Conditions
 {
-    public class IsNsfwChannel : ICondition<DiscordContext>
+    public class NsfwChannelCondition : ICondition<DiscordContext>
     {
         public bool Satisfied(DiscordContext context)
         {
