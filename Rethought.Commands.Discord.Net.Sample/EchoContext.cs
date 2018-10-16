@@ -1,14 +1,20 @@
-﻿namespace Rethought.Commands.Discord.Net.Sample
+﻿using Optional;
+
+namespace Rethought.Commands.Discord.Net.Sample
 {
     public class EchoContext
     {
-        public EchoContext(DiscordContext discordContext, string normalizedMessage)
+        public EchoContext(PrefixNormalizedDiscordContext prefixNormalizedDiscordContext, string content, Option<int> amountOption)
         {
-            DiscordContext = discordContext;
-            NormalizedMessage = normalizedMessage;
+            PrefixNormalizedDiscordContext = prefixNormalizedDiscordContext;
+            Content = content;
+            AmountOption = amountOption;
         }
 
-        public DiscordContext DiscordContext { get; }
-        public string NormalizedMessage { get; }
+        public PrefixNormalizedDiscordContext PrefixNormalizedDiscordContext { get; }
+
+        public string Content { get; }
+
+        public Option<int> AmountOption { get; }
     }
 }

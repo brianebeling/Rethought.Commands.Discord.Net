@@ -1,0 +1,15 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/Rethought.Commands.Discord.Net.Sample/Rethought.Commands.Discord.Net.Sample.csproj"
+            ],
+            "problemMatcher": "$msCompile"
+        }
+    ]
+}

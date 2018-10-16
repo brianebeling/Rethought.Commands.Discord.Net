@@ -2,10 +2,8 @@
 using System.Collections.Generic;
 using Rethought.Commands.Actions;
 using Rethought.Commands.Builder;
-using Rethought.Commands.Builder.Visitors;
 using Rethought.Commands.Discord.Net.Prefix;
 using Rethought.Commands.Discord.Net.TypeParsers;
-using Rethought.Commands.Parser;
 
 namespace Rethought.Commands.Discord.Net
 {
@@ -14,9 +12,9 @@ namespace Rethought.Commands.Discord.Net
         public static AsyncFuncBuilder<TContext> WithPrefix<TContext, TContext2>(
             this AsyncFuncBuilder<TContext> asyncFuncBuilder,
             IPrefix prefix,
-            System.Func<TContext, string> message,
+            Func<TContext, string> message,
             Func<TContext, string, TContext2> typeParser,
-            System.Action<AsyncFuncBuilder<TContext2>> configuration)
+            Action<AsyncFuncBuilder<TContext2>> configuration)
         {
             asyncFuncBuilder.WithAdapter(
                 new PrefixTypeParser<TContext, TContext2>(
@@ -28,17 +26,17 @@ namespace Rethought.Commands.Discord.Net
             return asyncFuncBuilder;
         }
 
-        public static AsyncFuncBuilder<NormalizedDiscordContext> WithPrefix(
-            this AsyncFuncBuilder<NormalizedDiscordContext> asyncFuncBuilder,
+        public static AsyncFuncBuilder<PrefixNormalizedDiscordContext> WithPrefix(
+            this AsyncFuncBuilder<PrefixNormalizedDiscordContext> asyncFuncBuilder,
             IPrefix prefix,
-            System.Action<AsyncFuncBuilder<NormalizedDiscordContext>> configuration)
+            Action<AsyncFuncBuilder<PrefixNormalizedDiscordContext>> configuration)
         {
             asyncFuncBuilder.WithAdapter(
-                new PrefixTypeParser<NormalizedDiscordContext, NormalizedDiscordContext>(
+                new PrefixTypeParser<PrefixNormalizedDiscordContext, PrefixNormalizedDiscordContext>(
                     prefix,
-                    context => context.NormalizedMessage,
+                    context => context.PrefixNormalizedMessage,
                     (context, normalizedMessage) =>
-                        new NormalizedDiscordContext(context.DiscordContext, normalizedMessage)),
+                        new PrefixNormalizedDiscordContext(context.DiscordContext, normalizedMessage)),
                 configuration);
 
             return asyncFuncBuilder;
@@ -47,14 +45,14 @@ namespace Rethought.Commands.Discord.Net
         public static AsyncFuncBuilder<DiscordContext> WithPrefix(
             this AsyncFuncBuilder<DiscordContext> asyncFuncBuilder,
             IPrefix prefix,
-            System.Action<AsyncFuncBuilder<NormalizedDiscordContext>> configuration)
+            Action<AsyncFuncBuilder<PrefixNormalizedDiscordContext>> configuration)
         {
             asyncFuncBuilder.WithAdapter(
-                new PrefixTypeParser<DiscordContext, NormalizedDiscordContext>(
+                new PrefixTypeParser<DiscordContext, PrefixNormalizedDiscordContext>(
                     prefix,
                     context => context.Message.Content,
                     (context, normalizedMessage) =>
-                        new NormalizedDiscordContext(context, normalizedMessage)),
+                        new PrefixNormalizedDiscordContext(context, normalizedMessage)),
                 configuration);
 
             return asyncFuncBuilder;
@@ -63,10 +61,10 @@ namespace Rethought.Commands.Discord.Net
         public static AsyncFuncBuilder<TContext> WithGroup<TContext, TContext2>(
             this AsyncFuncBuilder<TContext> asyncFuncBuilder,
             IPrefix prefix,
-            System.Func<TContext, string> message,
+            Func<TContext, string> message,
             Func<TContext, string, TContext2> typeParser,
-            List<System.Action<AsyncFuncBuilder<TContext2>>> configuration,
-            System.Action<AsyncFuncBuilder<TContext2>> defaultAction)
+            List<Action<AsyncFuncBuilder<TContext2>>> configuration,
+            Action<AsyncFuncBuilder<TContext2>> defaultAction)
         {
             configuration.Add(defaultAction);
 
@@ -80,41 +78,41 @@ namespace Rethought.Commands.Discord.Net
             return asyncFuncBuilder;
         }
 
-        public static AsyncFuncBuilder<NormalizedDiscordContext> WithGroup(
-            this AsyncFuncBuilder<NormalizedDiscordContext> asyncFuncBuilder,
+        public static AsyncFuncBuilder<PrefixNormalizedDiscordContext> WithGroup(
+            this AsyncFuncBuilder<PrefixNormalizedDiscordContext> asyncFuncBuilder,
             IPrefix prefix,
-            List<System.Action<AsyncFuncBuilder<NormalizedDiscordContext>>> configuration,
-            System.Action<AsyncFuncBuilder<NormalizedDiscordContext>> defaultAction)
+            List<Action<AsyncFuncBuilder<PrefixNormalizedDiscordContext>>> configuration,
+            Action<AsyncFuncBuilder<PrefixNormalizedDiscordContext>> defaultAction)
         {
             configuration.Add(defaultAction);
 
             // TODO: Optimize by making a new type parser for the specific use case
             asyncFuncBuilder.WithAdapter(
-                new PrefixTypeParser<NormalizedDiscordContext, NormalizedDiscordContext>(
+                new PrefixTypeParser<PrefixNormalizedDiscordContext, PrefixNormalizedDiscordContext>(
                     prefix,
-                    context => context.NormalizedMessage,
+                    context => context.PrefixNormalizedMessage,
                     (context, normalizedMessage) =>
-                        new NormalizedDiscordContext(context.DiscordContext, normalizedMessage)),
+                        new PrefixNormalizedDiscordContext(context.DiscordContext, normalizedMessage)),
                 group => group.Any(configuration, result => result == Result.Completed || result == Result.Aborted));
 
             return asyncFuncBuilder;
         }
 
-        
+
         public static AsyncFuncBuilder<DiscordContext> WithGroup(
             this AsyncFuncBuilder<DiscordContext> asyncFuncBuilder,
             IPrefix prefix,
-            List<System.Action<AsyncFuncBuilder<NormalizedDiscordContext>>> configuration,
-            System.Action<AsyncFuncBuilder<NormalizedDiscordContext>> defaultAction)
+            List<Action<AsyncFuncBuilder<PrefixNormalizedDiscordContext>>> configuration,
+            Action<AsyncFuncBuilder<PrefixNormalizedDiscordContext>> defaultAction)
         {
             configuration.Add(defaultAction);
 
             // TODO: Optimize by making a new type parser for the specific use case
             asyncFuncBuilder.WithAdapter(
-                new PrefixTypeParser<DiscordContext, NormalizedDiscordContext>(
+                new PrefixTypeParser<DiscordContext, PrefixNormalizedDiscordContext>(
                     prefix,
                     context => context.Message.Content,
-                    (context, normalizedMessage) => new NormalizedDiscordContext(context, normalizedMessage)),
+                    (context, normalizedMessage) => new PrefixNormalizedDiscordContext(context, normalizedMessage)),
                 group => group.Any(configuration, result => result == Result.Completed || result == Result.Aborted));
 
             return asyncFuncBuilder;
@@ -123,9 +121,9 @@ namespace Rethought.Commands.Discord.Net
         public static AsyncFuncBuilder<TContext> WithGroup<TContext, TContext2>(
             this AsyncFuncBuilder<TContext> asyncFuncBuilder,
             IPrefix prefix,
-            System.Func<TContext, string> message,
+            Func<TContext, string> message,
             Func<TContext, string, TContext2> typeParser,
-            List<System.Action<AsyncFuncBuilder<TContext2>>> configuration)
+            List<Action<AsyncFuncBuilder<TContext2>>> configuration)
         {
             asyncFuncBuilder.WithAdapter(
                 new PrefixTypeParser<TContext, TContext2>(
@@ -137,18 +135,18 @@ namespace Rethought.Commands.Discord.Net
             return asyncFuncBuilder;
         }
 
-        public static AsyncFuncBuilder<NormalizedDiscordContext> WithGroup(
-            this AsyncFuncBuilder<NormalizedDiscordContext> asyncFuncBuilder,
+        public static AsyncFuncBuilder<PrefixNormalizedDiscordContext> WithGroup(
+            this AsyncFuncBuilder<PrefixNormalizedDiscordContext> asyncFuncBuilder,
             IPrefix prefix,
-            List<System.Action<AsyncFuncBuilder<NormalizedDiscordContext>>> configuration)
+            List<Action<AsyncFuncBuilder<PrefixNormalizedDiscordContext>>> configuration)
         {
             // TODO: Optimize by making a new type parser for the specific use case
             asyncFuncBuilder.WithAdapter(
-                new PrefixTypeParser<NormalizedDiscordContext, NormalizedDiscordContext>(
+                new PrefixTypeParser<PrefixNormalizedDiscordContext, PrefixNormalizedDiscordContext>(
                     prefix,
-                    context => context.NormalizedMessage,
+                    context => context.PrefixNormalizedMessage,
                     (context, normalizedMessage) =>
-                        new NormalizedDiscordContext(context.DiscordContext, normalizedMessage)),
+                        new PrefixNormalizedDiscordContext(context.DiscordContext, normalizedMessage)),
                 group => group.Any(configuration, result => result == Result.Completed || result == Result.Aborted));
 
             return asyncFuncBuilder;
@@ -157,14 +155,14 @@ namespace Rethought.Commands.Discord.Net
         public static AsyncFuncBuilder<DiscordContext> WithGroup(
             this AsyncFuncBuilder<DiscordContext> asyncFuncBuilder,
             IPrefix prefix,
-            List<System.Action<AsyncFuncBuilder<NormalizedDiscordContext>>> configuration)
+            List<Action<AsyncFuncBuilder<PrefixNormalizedDiscordContext>>> configuration)
         {
             // TODO: Optimize by making a new type parser for the specific use case
             asyncFuncBuilder.WithAdapter(
-                new PrefixTypeParser<DiscordContext, NormalizedDiscordContext>(
+                new PrefixTypeParser<DiscordContext, PrefixNormalizedDiscordContext>(
                     prefix,
                     context => context.Message.Content,
-                    (context, normalizedMessage) => new NormalizedDiscordContext(context, normalizedMessage)),
+                    (context, normalizedMessage) => new PrefixNormalizedDiscordContext(context, normalizedMessage)),
                 group => group.Any(configuration, result => result == Result.Completed || result == Result.Aborted));
 
             return asyncFuncBuilder;
